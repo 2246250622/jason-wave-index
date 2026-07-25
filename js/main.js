@@ -126,8 +126,12 @@ function updateHeader(height, price) {
   updatePhaseText();
 }
 
+
+/**
+ * 把時間戳價格資料粗略對應到區塊高度
+ */
 function mapPriceToHeight(priceData, currentHeight) {
-  if (!priceData.length || !currentHeight) return [];
+  if (!priceData || !priceData.length || !currentHeight) return [];
 
   const result = [];
   const lastIndex = priceData.length - 1;
@@ -147,43 +151,134 @@ function mapPriceToHeight(priceData, currentHeight) {
       });
     }
   }
+
   return result.sort((a, b) => a.time - b.time);
 }
 
-async function loadRealData() {
-  console.log('開始載入真實資料...');
+/**
+ * 把日線資料聚合成週或月
+ */
+function aggregateData(dailyData, bucket) {
+  if (bucket === 'D' || !dailyData || !dailyData.length) return dailyData;
 
-  const [height, dailyData, livePrice] = await Promise.all([
-    fetchCurrentHeight(),
-    fetchBinanceDaily(1000),
-    fetchCurrentPrice()
-  ]);
+  const result = [];
+  let group = [];
+  const size = bucket === 'W' ? 7 : 30;
 
-  console.log('目前區塊高度:', height);
-  console.log('取得日線數量:', dailyData.length);
-  console.log('即時價格:', livePrice);
+  for (let i = 0; i < dailyData.length; i++) {
+    group.push(dailyData[i]);
 
-  if (!height || dailyData.length === 0) {
-    console.warn('真實資料載入失敗，改用模擬資料');
-    const mockData = generateMockData(300000, 960000, 144);
-    updateCharts(mockData, state.scale);
-    const last = mockData[mockData.length - 1];
-    updateHeader(last.time, last.value);
-    return;
+    if (group.length === size || i === dailyData.length - 1) {
+      const open = group[0].open;
+      const close = group[group.length - 1].close;
+      const high = Math.max(...group.map(d => d.high));
+      const low = Math.min(...group.map(d => d.low));
+      const time = group[group.length - 1].time;
+
+      result.push({
+        time,
+        open,
+        high,
+        low,
+        close,
+        value: close
+      });
+
+      group = [];
+    }
   }
 
-  const mappedData = mapPriceToHeight(dailyData, height);
-  state.priceData = mappedData;
+  return result;
+}
 
-  updateCharts(mappedData, state.scale);
-  updateHeader(height, livePrice || dailyData[dailyData.length - 1].value);
+async function loadRealData() {
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.classList.remove('hidden');
 
-  console.log('真實資料載入完成，共', mappedData.length, '個點');
+  console.log('開始載入真實資料...');
+
+  try {
+    const [height, dailyData, livePrice] = await Promise.all([
+      fetchCurrentHeight(),
+      fetchBinanceDaily(1000),
+      fetchCurrentPrice()
+    ]);
+
+    console.log('目前區塊高度:', height);
+    console.log('取得日線數量:', dailyData.length);
+    console.log('即時價格:', livePrice);
+
+    if (!height || dailyData.length === 0) {
+      throw new Error('資料不完整');
+    }
+
+    const mappedData = mapPriceToHeight(dailyData, height);
+    state.priceData = mappedData;
+
+    const data = aggregateData(mappedData, state.bucket);
+    updateCharts(data, state.scale, state.style);
+    updateHeader(height, livePrice || dailyData[dailyData.length - 1].value);
+
+    console.log('真實資料載入完成，共', data.length, '個點');
+  } catch (err) {
+    console.error('載入失敗:', err);
+    const mockData = generateMockData(300000, 960000, 144);
+    updateCharts(mockData, state.scale, state.style);
+    const last = mockData[mockData.length - 1];
+    updateHeader(last.time, last.value);
+  } finally {
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
+}
+  
+
+
+async function loadRealData() {
+  const loadingEl = document.getElementById('loading');
+  if (loadingEl) loadingEl.classList.remove('hidden');
+
+  console.log('開始載入真實資料...');
+
+  try {
+    const [height, dailyData, livePrice] = await Promise.all([
+      fetchCurrentHeight(),
+      fetchBinanceDaily(1000),
+      fetchCurrentPrice()
+    ]);
+
+    console.log('目前區塊高度:', height);
+    console.log('取得日線數量:', dailyData.length);
+    console.log('即時價格:', livePrice);
+
+    if (!height || dailyData.length === 0) {
+      throw new Error('資料不完整');
+    }
+
+    const mappedData = mapPriceToHeight(dailyData, height);
+    state.priceData = mappedData;
+
+    const data = aggregateData(mappedData, state.bucket);
+    updateCharts(data, state.scale, state.style);
+    updateHeader(height, livePrice || dailyData[dailyData.length - 1].value);
+
+    console.log('真實資料載入完成，共', mappedData.length, '個點');
+  } catch (err) {
+    console.error('載入失敗:', err);
+    // 失敗時用模擬資料
+    const mockData = generateMockData(300000, 960000, 144);
+    const data = aggregateData(mappedData, state.bucket);
+    updateCharts(data, state.scale, state.style);
+    const last = mockData[mockData.length - 1];
+    updateHeader(last.time, last.value);
+  } finally {
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
 }
 
 function refreshChart() {
   if (state.priceData.length > 0) {
-    updateCharts(state.priceData, state.scale, state.style);
+    const data = aggregateData(state.priceData, state.bucket);
+    updateCharts(data, state.scale, state.style);
     updateHeader(state.currentHeight, state.currentPrice);
   } else {
     loadRealData();

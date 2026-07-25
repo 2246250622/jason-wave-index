@@ -198,17 +198,17 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
     return;
   }
 
-  // 清除舊 series
+  // 清除舊的 series
   if (priceSeries) {
-    mainChart.removeSeries(priceSeries);
+    try { mainChart.removeSeries(priceSeries); } catch(e) {}
     priceSeries = null;
   }
   if (jwiSeries) {
-    jwiChart.removeSeries(jwiSeries);
+    try { jwiChart.removeSeries(jwiSeries); } catch(e) {}
     jwiSeries = null;
   }
   if (futureSeries) {
-    jwiChart.removeSeries(futureSeries);
+    try { jwiChart.removeSeries(futureSeries); } catch(e) {}
     futureSeries = null;
   }
   if (window.bullSeries) {
@@ -218,6 +218,13 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
   if (window.bearSeries) {
     try { jwiChart.removeSeries(window.bearSeries); } catch(e) {}
     window.bearSeries = null;
+  }
+  // 清除之前的彩虹線段
+  if (window.waveSegments) {
+    window.waveSegments.forEach(s => {
+      try { mainChart.removeSeries(s); } catch(e) {}
+    });
+    window.waveSegments = [];
   }
 
   // ===== 主圖 =====
@@ -237,8 +244,19 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
       low: d.low,
       close: d.close
     })));
-  } else {
-    // line 或 wave 都先用線
+  } else if (style === 'wave') {
+  // 暫時用單色，之後再優化彩虹著色
+  priceSeries = mainChart.addLineSeries({
+    color: '#22d3ee',
+    lineWidth: 2.5,
+    priceFormat: { type: 'price', precision: 0, minMove: 1 },
+  });
+  priceSeries.setData(priceData.map(d => ({
+    time: d.time,
+    value: d.close || d.value
+  })));
+} else {
+    // 一般折線
     priceSeries = mainChart.addLineSeries({
       color: '#22d3ee',
       lineWidth: 2,
@@ -250,13 +268,14 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
     })));
   }
 
+  // 對數 / 線性
   mainChart.priceScale('right').applyOptions({
     mode: scale === 'log'
       ? LightweightCharts.PriceScaleMode.Logarithmic
       : LightweightCharts.PriceScaleMode.Normal,
   });
 
-  // ===== 副圖 JWI 牛熊分色（保持原本邏輯） =====
+  // ===== 副圖 JWI（保持牛熊分色） =====
   const bullData = [];
   const bearData = [];
 
@@ -267,21 +286,16 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
 
     if (phase === 'bull') {
       bullData.push(point);
-      if (i > 0 && getPhase(priceData[i-1].time) === 'bear') {
-        bearData.push(point);
-      }
+      if (i > 0 && getPhase(priceData[i-1].time) === 'bear') bearData.push(point);
     } else {
       bearData.push(point);
-      if (i > 0 && getPhase(priceData[i-1].time) === 'bull') {
-        bullData.push(point);
-      }
+      if (i > 0 && getPhase(priceData[i-1].time) === 'bull') bullData.push(point);
     }
   });
 
   window.bullSeries = jwiChart.addLineSeries({
     color: '#22d3ee',
     lineWidth: 2.5,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
     lastValueVisible: false,
     priceLineVisible: false,
   });
@@ -290,7 +304,6 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
   window.bearSeries = jwiChart.addLineSeries({
     color: '#f87171',
     lineWidth: 2.5,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
     lastValueVisible: false,
     priceLineVisible: false,
   });
@@ -299,7 +312,6 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
   jwiSeries = jwiChart.addLineSeries({
     color: 'transparent',
     lineWidth: 0,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
   });
   jwiSeries.setData(priceData.map(d => ({
     time: d.time,
@@ -320,12 +332,20 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
   futureSeries.setData(futureData);
 
   // ===== 減半線 =====
-  const minH = priceData[0].time;
-  const maxH = lastHeight + 150000;
-  drawHalvingLines(minH, maxH);
+  drawHalvingLines(priceData[0].time, lastHeight + 150000);
 
   mainChart.timeScale().fitContent();
   console.log('Charts updated – style:', style);
+}
+
+/**
+ * 把 JWI (0~1) 轉成彩虹顏色
+ * 0 = 藍, 0.5 = 青/綠, 1 = 紅
+ */
+function jwiToColor(jwi) {
+  // 使用 HSL：從 210°(藍) 到 0°(紅)
+  const hue = 210 - (jwi * 210);
+  return `hsl(${hue}, 85%, 55%)`;
 }
 
 function generateMockData(startHeight = 300000, endHeight = 960000, step = 144) {
