@@ -1,4 +1,3 @@
-```markdown
 # Jason Wave Index (JWI)
 
 以**區塊高度**為唯一橫軸的比特幣週期指數圖表。
@@ -95,5 +94,5 @@ Jason（[@cheuk_baby](https://x.com/cheuk_baby)）
 ## License
 
 MIT
-```
+
 
