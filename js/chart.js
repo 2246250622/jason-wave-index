@@ -79,6 +79,37 @@ function initCharts() {
     }
   });
 
+  // Hover 資訊卡
+const tooltip = document.getElementById('tooltip');
+
+mainChart.subscribeCrosshairMove(param => {
+  if (!param || !param.time || !param.seriesData) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const priceDataPoint = param.seriesData.get(priceSeries);
+  if (!priceDataPoint) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const height = param.time;
+  const price = priceDataPoint.close || priceDataPoint.value;
+  const jwi = calcJWI(height);
+  const phase = getPhase(height);
+
+  document.getElementById('tip-height').textContent = height.toLocaleString();
+  document.getElementById('tip-price').textContent = Number(price).toLocaleString('en-US', {
+    style: 'currency', currency: 'USD', maximumFractionDigits: 0
+  });
+  document.getElementById('tip-jwi').textContent = jwi.toFixed(3);
+  document.getElementById('tip-phase').textContent = phase === 'bull' ? 'Bull Phase / 牛市' : 'Bear Phase / 熊市';
+
+  tooltip.style.display = 'block';
+  tooltip.style.left = (param.point.x + 20) + 'px';
+  tooltip.style.top = (param.point.y + 20) + 'px';
+});
   console.log('Charts initialized successfully');
 }
 
