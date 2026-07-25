@@ -24,6 +24,29 @@
   --grid: #e2e8f0;
 }
 
+.tooltip {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  min-width: 160px;
+}
+
+.tooltip-row {
+  margin: 4px 0;
+  color: var(--text-muted);
+}
+
+.tooltip-row strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 * {
   margin: 0;
   padding: 0;

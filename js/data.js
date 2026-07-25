@@ -26,16 +26,13 @@ async function fetchBinanceDaily(limit = 1000) {
     if (!res.ok) throw new Error('Binance fetch failed');
     const raw = await res.json();
 
-    // Binance 回傳格式: [openTime, open, high, low, close, volume, ...]
-    // 我們先轉成 { time: 時間戳, value: 收盤價 }
-    // 注意：之後會再對應到區塊高度
     return raw.map(k => ({
-      time: Math.floor(k[0] / 1000), // 轉成秒級時間戳
+      time: Math.floor(k[0] / 1000),
       open: parseFloat(k[1]),
       high: parseFloat(k[2]),
       low: parseFloat(k[3]),
       close: parseFloat(k[4]),
-      value: parseFloat(k[4])  // 先用收盤價
+      value: parseFloat(k[4])
     }));
   } catch (err) {
     console.error('取得 Binance 資料失敗:', err);

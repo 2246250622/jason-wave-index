@@ -161,7 +161,7 @@ function drawBullBearBackground(priceData) {
   // 實際專案可以用 markers 或 custom primitive，這裡先用基礎方法
 }
 
-function updateCharts(priceData, scale = 'log') {
+function updateCharts(priceData, scale = 'log', style = 'line') {
   if (!mainChart || !jwiChart || !priceData || priceData.length === 0) {
     console.warn('無法更新圖表');
     return;
@@ -180,8 +180,6 @@ function updateCharts(priceData, scale = 'log') {
     jwiChart.removeSeries(futureSeries);
     futureSeries = null;
   }
-
-  // 清除舊的牛熊線（如果有的話）
   if (window.bullSeries) {
     try { jwiChart.removeSeries(window.bullSeries); } catch(e) {}
     window.bullSeries = null;
@@ -191,13 +189,35 @@ function updateCharts(priceData, scale = 'log') {
     window.bearSeries = null;
   }
 
-  // ===== 主圖價格 =====
-  priceSeries = mainChart.addLineSeries({
-    color: '#22d3ee',
-    lineWidth: 2,
-    priceFormat: { type: 'price', precision: 0, minMove: 1 },
-  });
-  priceSeries.setData(priceData);
+  // ===== 主圖 =====
+  if (style === 'candle') {
+    priceSeries = mainChart.addCandlestickSeries({
+      upColor: '#22d3ee',
+      downColor: '#f87171',
+      borderUpColor: '#22d3ee',
+      borderDownColor: '#f87171',
+      wickUpColor: '#22d3ee',
+      wickDownColor: '#f87171',
+    });
+    priceSeries.setData(priceData.map(d => ({
+      time: d.time,
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close
+    })));
+  } else {
+    // line 或 wave 都先用線
+    priceSeries = mainChart.addLineSeries({
+      color: '#22d3ee',
+      lineWidth: 2,
+      priceFormat: { type: 'price', precision: 0, minMove: 1 },
+    });
+    priceSeries.setData(priceData.map(d => ({
+      time: d.time,
+      value: d.close || d.value
+    })));
+  }
 
   mainChart.priceScale('right').applyOptions({
     mode: scale === 'log'
@@ -205,7 +225,7 @@ function updateCharts(priceData, scale = 'log') {
       : LightweightCharts.PriceScaleMode.Normal,
   });
 
-  // ===== 副圖 JWI：拆成牛市（青色）+ 熊市（紅色） =====
+  // ===== 副圖 JWI 牛熊分色（保持原本邏輯） =====
   const bullData = [];
   const bearData = [];
 
@@ -216,7 +236,6 @@ function updateCharts(priceData, scale = 'log') {
 
     if (phase === 'bull') {
       bullData.push(point);
-      // 為了讓線段連續，在轉換點也加一個點到另一邊
       if (i > 0 && getPhase(priceData[i-1].time) === 'bear') {
         bearData.push(point);
       }
@@ -228,7 +247,6 @@ function updateCharts(priceData, scale = 'log') {
     }
   });
 
-  // 牛市線（青色）
   window.bullSeries = jwiChart.addLineSeries({
     color: '#22d3ee',
     lineWidth: 2.5,
@@ -238,7 +256,6 @@ function updateCharts(priceData, scale = 'log') {
   });
   window.bullSeries.setData(bullData);
 
-  // 熊市線（紅色）
   window.bearSeries = jwiChart.addLineSeries({
     color: '#f87171',
     lineWidth: 2.5,
@@ -248,7 +265,6 @@ function updateCharts(priceData, scale = 'log') {
   });
   window.bearSeries.setData(bearData);
 
-  // 為了顯示最後數值，再加一條完整的透明線
   jwiSeries = jwiChart.addLineSeries({
     color: 'transparent',
     lineWidth: 0,
@@ -272,13 +288,13 @@ function updateCharts(priceData, scale = 'log') {
   });
   futureSeries.setData(futureData);
 
-  // ===== 減半垂直線 =====
+  // ===== 減半線 =====
   const minH = priceData[0].time;
   const maxH = lastHeight + 150000;
   drawHalvingLines(minH, maxH);
 
   mainChart.timeScale().fitContent();
-  console.log('Charts updated – bull/bear colored');
+  console.log('Charts updated – style:', style);
 }
 
 function generateMockData(startHeight = 300000, endHeight = 960000, step = 144) {

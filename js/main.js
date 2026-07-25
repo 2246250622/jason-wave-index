@@ -13,7 +13,10 @@ const I18N = {
     theme: '主題',
     phaseBull: '目前處於牛市階段',
     phaseBear: '目前處於熊市階段',
-    live: 'LIVE'
+    live: 'LIVE',
+    line: '折線',
+    candle: 'K線',
+    wave: '波浪著色',
   },
   en: {
     price: 'BTC Price',
@@ -27,7 +30,10 @@ const I18N = {
     theme: 'Theme',
     phaseBull: 'Currently in Bull Phase',
     phaseBear: 'Currently in Bear Phase',
-    live: 'LIVE'
+    live: 'LIVE',
+    line: 'Line',
+    candle: 'Candles',
+    wave: 'Wave Color',
   }
 };
 
@@ -38,7 +44,8 @@ const state = {
   bucket: 'D',
   currentHeight: 0,
   currentPrice: 0,
-  priceData: []
+  priceData: [],
+  style: 'line',
 };
 
 function $(sel) { return document.querySelector(sel); }
@@ -128,10 +135,15 @@ function mapPriceToHeight(priceData, currentHeight) {
   for (let i = 0; i < priceData.length; i++) {
     const daysAgo = lastIndex - i;
     const estimatedHeight = currentHeight - (daysAgo * 144);
+
     if (estimatedHeight > 0) {
       result.push({
         time: estimatedHeight,
-        value: priceData[i].value
+        open: priceData[i].open,
+        high: priceData[i].high,
+        low: priceData[i].low,
+        close: priceData[i].close,
+        value: priceData[i].close
       });
     }
   }
@@ -171,7 +183,7 @@ async function loadRealData() {
 
 function refreshChart() {
   if (state.priceData.length > 0) {
-    updateCharts(state.priceData, state.scale);
+    updateCharts(state.priceData, state.scale, state.style);
     updateHeader(state.currentHeight, state.currentPrice);
   } else {
     loadRealData();
@@ -198,6 +210,14 @@ function bindEvents() {
     });
   });
 
+  $$('[data-style]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.style = btn.dataset.style;
+    $$('[data-style]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshChart();
+  });
+});
   $$('[data-scale]').forEach(btn => {
     btn.addEventListener('click', () => {
       state.scale = btn.dataset.scale;

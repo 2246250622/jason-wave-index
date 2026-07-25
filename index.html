@@ -40,11 +40,17 @@
 </header>
 
     <!-- 控制列 -->
-    <div class="controls">
+  <div class="controls">
   <div class="control-group">
     <button class="ctrl-btn active" data-bucket="D" data-i18n="daily">日</button>
     <button class="ctrl-btn" data-bucket="W" data-i18n="weekly">週</button>
     <button class="ctrl-btn" data-bucket="M" data-i18n="monthly">月</button>
+  </div>
+
+  <div class="control-group">
+    <button class="ctrl-btn active" data-style="line" data-i18n="line">折線</button>
+    <button class="ctrl-btn" data-style="candle" data-i18n="candle">K線</button>
+    <button class="ctrl-btn" data-style="wave" data-i18n="wave">波浪著色</button>
   </div>
 
   <div class="control-group">
@@ -57,6 +63,16 @@
     <main class="chart-area">
       <div id="main-chart" class="chart"></div>
       <div id="jwi-chart" class="chart sub-chart"></div>
+
+      <!-- Hover 資訊卡 -->
+<div id="tooltip" class="tooltip" style="display: none;">
+  <div class="tooltip-row"><span data-i18n="blockHeight">區塊高度</span>: <strong id="tip-height">—</strong></div>
+  <div class="tooltip-row"><span data-i18n="price">價格</span>: <strong id="tip-price">—</strong></div>
+  <div class="tooltip-row">JWI: <strong id="tip-jwi">—</strong></div>
+  <div class="tooltip-row"><span id="tip-phase">—</span></div>
+</div>
+
+
     </main>
 
     <!-- 底部資訊 -->
