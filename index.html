@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jason Wave Index</title>
+  <meta name="description" content="Jason Wave Index - Bitcoin cycle position indicator based purely on block height" />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Lightweight Charts CDN（之後可改成本地 vendor） -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body class="theme-dark">
+  <div id="app">
+    <!-- 頂部欄 -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">Jason Wave Index</h1>
+        <span class="badge live" id="live-badge">LIVE</span>
+      </div>
+
+      <div class="header-center">
+        <div class="stat">
+          <span class="stat-label" data-i18n="price">BTC 價格</span>
+          <span class="stat-value" id="price-value">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" data-i18n="jwi">Jason Wave Index</span>
+          <span class="stat-value accent" id="jwi-value">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" data-i18n="blockHeight">區塊高度</span>
+          <span class="stat-value" id="height-value">—</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="btn" id="btn-lang">中 / EN</button>
+        <button class="btn" id="btn-theme">Theme</button>
+        <button class="btn" id="btn-about" data-i18n="about">關於</button>
+      </div>
+    </header>
+
+    <!-- 控制列 -->
+    <div class="controls">
+      <div class="control-group">
+        <button class="ctrl-btn active" data-bucket="D" data-i18n="daily">日</button>
+        <button class="ctrl-btn" data-bucket="W" data-i18n="weekly">週</button>
+        <button class="ctrl-btn" data-bucket="M" data-i18n="monthly">月</button>
+      </div>
+
+      <div class="control-group">
+        <button class="ctrl-btn active" data-style="wave" data-i18n="wave">波浪著色</button>
+        <button class="ctrl-btn" data-style="candle" data-i18n="candle">K線</button>
+        <button class="ctrl-btn" data-style="line" data-i18n="line">折線</button>
+      </div>
+
+      <div class="control-group">
+        <button class="ctrl-btn active" data-scale="log" data-i18n="log">對數</button>
+        <button class="ctrl-btn" data-scale="linear" data-i18n="linear">線性</button>
+      </div>
+    </div>
+
+    <!-- 圖表區 -->
+    <main class="chart-area">
+      <div id="main-chart" class="chart"></div>
+      <div id="jwi-chart" class="chart sub-chart"></div>
+    </main>
+
+    <!-- 底部資訊 -->
+    <footer class="footer">
+      <span id="phase-text">—</span>
+      <span class="separator">·</span>
+      <span>Block Height as X-Axis</span>
+    </footer>
+  </div>
+
+<script src="js/formula.js"></script>
+<script src="js/data.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
