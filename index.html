@@ -12,53 +12,46 @@
 <body class="theme-dark">
   <div id="app">
     <!-- 頂部欄 -->
-    <header class="header">
-      <div class="header-left">
-        <h1 class="logo">Jason Wave Index</h1>
-        <span class="badge live" id="live-badge">LIVE</span>
-      </div>
+   <header class="header">
+  <div class="header-left">
+    <h1 class="logo">Jason Wave Index</h1>
+    <span class="badge live" id="live-badge">LIVE</span>
+  </div>
 
-      <div class="header-center">
-        <div class="stat">
-          <span class="stat-label" data-i18n="price">BTC 價格</span>
-          <span class="stat-value" id="price-value">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label" data-i18n="jwi">Jason Wave Index</span>
-          <span class="stat-value accent" id="jwi-value">—</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label" data-i18n="blockHeight">區塊高度</span>
-          <span class="stat-value" id="height-value">—</span>
-        </div>
-      </div>
+  <div class="header-center">
+    <div class="stat">
+      <span class="stat-label" data-i18n="price">BTC 價格</span>
+      <span class="stat-value" id="price-value">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label" data-i18n="jwi">Jason Wave Index</span>
+      <span class="stat-value accent" id="jwi-value">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label" data-i18n="blockHeight">區塊高度</span>
+      <span class="stat-value" id="height-value">—</span>
+    </div>
+  </div>
 
-      <div class="header-right">
-        <button class="btn" id="btn-lang">中 / EN</button>
-        <button class="btn" id="btn-theme">Theme</button>
-        <button class="btn" id="btn-about" data-i18n="about">關於</button>
-      </div>
-    </header>
+  <div class="header-right">
+    <button class="btn" id="btn-lang">中 / EN</button>
+    <button class="btn" id="btn-theme" data-i18n="theme">主題</button>
+  </div>
+</header>
 
     <!-- 控制列 -->
     <div class="controls">
-      <div class="control-group">
-        <button class="ctrl-btn active" data-bucket="D" data-i18n="daily">日</button>
-        <button class="ctrl-btn" data-bucket="W" data-i18n="weekly">週</button>
-        <button class="ctrl-btn" data-bucket="M" data-i18n="monthly">月</button>
-      </div>
+  <div class="control-group">
+    <button class="ctrl-btn active" data-bucket="D" data-i18n="daily">日</button>
+    <button class="ctrl-btn" data-bucket="W" data-i18n="weekly">週</button>
+    <button class="ctrl-btn" data-bucket="M" data-i18n="monthly">月</button>
+  </div>
 
-      <div class="control-group">
-        <button class="ctrl-btn active" data-style="wave" data-i18n="wave">波浪著色</button>
-        <button class="ctrl-btn" data-style="candle" data-i18n="candle">K線</button>
-        <button class="ctrl-btn" data-style="line" data-i18n="line">折線</button>
-      </div>
-
-      <div class="control-group">
-        <button class="ctrl-btn active" data-scale="log" data-i18n="log">對數</button>
-        <button class="ctrl-btn" data-scale="linear" data-i18n="linear">線性</button>
-      </div>
-    </div>
+  <div class="control-group">
+    <button class="ctrl-btn active" data-scale="log" data-i18n="log">對數</button>
+    <button class="ctrl-btn" data-scale="linear" data-i18n="linear">線性</button>
+  </div>
+</div>
 
     <!-- 圖表區 -->
     <main class="chart-area">

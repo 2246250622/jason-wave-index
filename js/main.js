@@ -1,4 +1,35 @@
-// Jason Wave Index - 主程式
+// Jason Wave Index - 主程式（完整中英文 + 主題）
+
+const I18N = {
+  zh: {
+    price: 'BTC 價格',
+    jwi: 'Jason Wave Index',
+    blockHeight: '區塊高度',
+    daily: '日',
+    weekly: '週',
+    monthly: '月',
+    log: '對數',
+    linear: '線性',
+    theme: '主題',
+    phaseBull: '目前處於牛市階段',
+    phaseBear: '目前處於熊市階段',
+    live: 'LIVE'
+  },
+  en: {
+    price: 'BTC Price',
+    jwi: 'Jason Wave Index',
+    blockHeight: 'Block Height',
+    daily: 'D',
+    weekly: 'W',
+    monthly: 'M',
+    log: 'Log',
+    linear: 'Linear',
+    theme: 'Theme',
+    phaseBull: 'Currently in Bull Phase',
+    phaseBear: 'Currently in Bear Phase',
+    live: 'LIVE'
+  }
+};
 
 const state = {
   theme: localStorage.getItem('jwi-theme') || 'dark',
@@ -7,7 +38,7 @@ const state = {
   bucket: 'D',
   currentHeight: 0,
   currentPrice: 0,
-  priceData: []       // 儲存處理後的資料
+  priceData: []
 };
 
 function $(sel) { return document.querySelector(sel); }
@@ -17,13 +48,65 @@ function applyTheme(theme) {
   state.theme = theme;
   localStorage.setItem('jwi-theme', theme);
   document.body.className = 'theme-' + theme;
+
+  // 同步更新圖表顏色
+  const isDark = theme === 'dark';
+  const textColor = isDark ? '#8b9cb3' : '#64748b';
+  const gridColor = isDark ? '#1a2332' : '#e2e8f0';
+  const borderColor = isDark ? '#1e2833' : '#e2e8f0';
+
+  if (mainChart) {
+    mainChart.applyOptions({
+      layout: { textColor },
+      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+      rightPriceScale: { borderColor },
+      timeScale: { borderColor }
+    });
+  }
+  if (jwiChart) {
+    jwiChart.applyOptions({
+      layout: { textColor },
+      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+      rightPriceScale: { borderColor },
+      timeScale: { borderColor }
+    });
+  }
+}
+
+function applyLanguage(lang) {
+  state.lang = lang;
+  localStorage.setItem('jwi-lang', lang);
+
+  const dict = I18N[lang];
+
+  $$('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) {
+      el.textContent = dict[key];
+    }
+  });
+
+  // 更新階段文字
+  updatePhaseText();
+
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+}
+
+function updatePhaseText() {
+  if (!state.currentHeight) return;
+  const phase = getPhase(state.currentHeight);
+  const text = phase === 'bull' ? I18N[state.lang].phaseBull : I18N[state.lang].phaseBear;
+  const el = $('#phase-text');
+  if (el) el.textContent = text;
 }
 
 function updateHeader(height, price) {
   if (!height || !price) return;
 
+  state.currentHeight = height;
+  state.currentPrice = price;
+
   const jwi = calcJWI(height);
-  const phase = getPhase(height);
 
   $('#price-value').textContent = price.toLocaleString('en-US', {
     style: 'currency',
@@ -33,29 +116,18 @@ function updateHeader(height, price) {
   $('#jwi-value').textContent = jwi.toFixed(3);
   $('#height-value').textContent = height.toLocaleString();
 
-  const phaseText = phase === 'bull'
-    ? (state.lang === 'zh' ? '目前處於牛市階段' : 'Currently in Bull Phase')
-    : (state.lang === 'zh' ? '目前處於熊市階段' : 'Currently in Bear Phase');
-
-  $('#phase-text').textContent = phaseText;
+  updatePhaseText();
 }
 
-/**
- * 把「時間戳價格」粗略對應到區塊高度
- * （暫時用平均出塊時間估算，之後可再優化）
- */
 function mapPriceToHeight(priceData, currentHeight) {
   if (!priceData.length || !currentHeight) return [];
 
-  // 假設最近一根對應目前高度，往前推
-  // 平均每 10 分鐘一個塊 → 一天約 144 塊
   const result = [];
   const lastIndex = priceData.length - 1;
 
   for (let i = 0; i < priceData.length; i++) {
     const daysAgo = lastIndex - i;
     const estimatedHeight = currentHeight - (daysAgo * 144);
-
     if (estimatedHeight > 0) {
       result.push({
         time: estimatedHeight,
@@ -63,15 +135,12 @@ function mapPriceToHeight(priceData, currentHeight) {
       });
     }
   }
-
-  // 確保按高度排序
   return result.sort((a, b) => a.time - b.time);
 }
 
 async function loadRealData() {
   console.log('開始載入真實資料...');
 
-  // 同時抓高度與價格
   const [height, dailyData, livePrice] = await Promise.all([
     fetchCurrentHeight(),
     fetchBinanceDaily(1000),
@@ -91,39 +160,33 @@ async function loadRealData() {
     return;
   }
 
-  state.currentHeight = height;
-  state.currentPrice = livePrice || dailyData[dailyData.length - 1].value;
-
-  // 把價格對應到區塊高度
   const mappedData = mapPriceToHeight(dailyData, height);
   state.priceData = mappedData;
 
   updateCharts(mappedData, state.scale);
-  updateHeader(height, state.currentPrice);
+  updateHeader(height, livePrice || dailyData[dailyData.length - 1].value);
 
   console.log('真實資料載入完成，共', mappedData.length, '個點');
 }
 
 function refreshChart() {
   if (state.priceData.length > 0) {
-    // 已有真實資料就直接重繪
     updateCharts(state.priceData, state.scale);
     updateHeader(state.currentHeight, state.currentPrice);
   } else {
-    // 還沒載入就重新載入
     loadRealData();
   }
 }
 
 function bindEvents() {
   $('#btn-lang')?.addEventListener('click', () => {
-    state.lang = state.lang === 'zh' ? 'en' : 'zh';
-    localStorage.setItem('jwi-lang', state.lang);
-    updateHeader(state.currentHeight, state.currentPrice);
+    const next = state.lang === 'zh' ? 'en' : 'zh';
+    applyLanguage(next);
   });
 
   $('#btn-theme')?.addEventListener('click', () => {
-    applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+    const next = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
   });
 
   $$('[data-bucket]').forEach(btn => {
@@ -131,7 +194,6 @@ function bindEvents() {
       state.bucket = btn.dataset.bucket;
       $$('[data-bucket]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // 之後實作不同粒度
       refreshChart();
     });
   });
@@ -148,22 +210,23 @@ function bindEvents() {
 
 async function init() {
   console.log('開始初始化 Jason Wave Index...');
+  
   applyTheme(state.theme);
+  applyLanguage(state.lang);
   bindEvents();
   initCharts();
 
-  // 載入真實資料
   await loadRealData();
 
-  // 每 60 秒更新一次高度與價格
+  // 每 60 秒更新高度與價格
   setInterval(async () => {
     const [height, price] = await Promise.all([
       fetchCurrentHeight(),
       fetchCurrentPrice()
     ]);
-    if (height) state.currentHeight = height;
-    if (price) state.currentPrice = price;
-    updateHeader(state.currentHeight, state.currentPrice);
+    if (height && price) {
+      updateHeader(height, price);
+    }
   }, 60000);
 
   console.log('Jason Wave Index 初始化完成');
