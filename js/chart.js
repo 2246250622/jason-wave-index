@@ -240,7 +240,6 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
     try { jwiChart.removeSeries(window.bearSeries); } catch(e) {}
     window.bearSeries = null;
   }
-  // 清除之前的彩虹線段
   if (window.waveSegments) {
     window.waveSegments.forEach(s => {
       try { mainChart.removeSeries(s); } catch(e) {}
@@ -266,17 +265,35 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
       close: d.close
     })));
   } else if (style === 'wave') {
-  // 暫時用單色，之後再優化彩虹著色
-  priceSeries = mainChart.addLineSeries({
-    color: '#22d3ee',
-    lineWidth: 2.5,
-    priceFormat: { type: 'price', precision: 0, minMove: 1 },
-  });
-  priceSeries.setData(priceData.map(d => ({
-    time: d.time,
-    value: d.close || d.value
-  })));
-} else {
+    // 效能友善的彩虹著色
+    window.waveSegments = [];
+    const maxSegments = 80;
+    const segmentSize = Math.max(1, Math.floor(priceData.length / maxSegments));
+
+    for (let i = 0; i < priceData.length - 1; i += segmentSize) {
+      const end = Math.min(i + segmentSize, priceData.length - 1);
+      const slice = priceData.slice(i, end + 1);
+
+      const mid = slice[Math.floor(slice.length / 2)];
+      const jwi = calcJWI(mid.time);
+      const color = jwiToColor(jwi);
+
+      const seg = mainChart.addLineSeries({
+        color: color,
+        lineWidth: 2.5,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+
+      seg.setData(slice.map(d => ({
+        time: d.time,
+        value: d.close || d.value
+      })));
+
+      window.waveSegments.push(seg);
+    }
+  } else {
     // 一般折線
     priceSeries = mainChart.addLineSeries({
       color: '#22d3ee',
@@ -296,7 +313,7 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
       : LightweightCharts.PriceScaleMode.Normal,
   });
 
-  // ===== 副圖 JWI（保持牛熊分色） =====
+  // ===== 副圖 JWI 牛熊分色 =====
   const bullData = [];
   const bearData = [];
 
@@ -307,10 +324,14 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
 
     if (phase === 'bull') {
       bullData.push(point);
-      if (i > 0 && getPhase(priceData[i-1].time) === 'bear') bearData.push(point);
+      if (i > 0 && getPhase(priceData[i - 1].time) === 'bear') {
+        bearData.push(point);
+      }
     } else {
       bearData.push(point);
-      if (i > 0 && getPhase(priceData[i-1].time) === 'bull') bullData.push(point);
+      if (i > 0 && getPhase(priceData[i - 1].time) === 'bull') {
+        bullData.push(point);
+      }
     }
   });
 
@@ -359,16 +380,10 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
   console.log('Charts updated – style:', style);
 }
 
-/**
- * 把 JWI (0~1) 轉成彩虹顏色
- * 0 = 藍, 0.5 = 青/綠, 1 = 紅
- */
 function jwiToColor(jwi) {
-  // 使用 HSL：從 210°(藍) 到 0°(紅)
-  const hue = 210 - (jwi * 210);
-  return `hsl(${hue}, 85%, 55%)`;
+  const hue = Math.round(210 - (jwi * 210));
+  return `hsl(${hue}, 80%, 55%)`;
 }
-
 function generateMockData(startHeight = 300000, endHeight = 960000, step = 144) {
   const data = [];
   let price = 100;

@@ -242,7 +242,7 @@ async function loadRealData() {
   try {
     const [height, dailyData, livePrice] = await Promise.all([
       fetchCurrentHeight(),
-      fetchBinanceDaily(1000),
+      fetchBinanceDaily(3000),
       fetchCurrentPrice()
     ]);
 
