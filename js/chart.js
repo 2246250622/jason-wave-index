@@ -21,28 +21,42 @@ function initCharts() {
   }
 
   const commonOptions = {
-    layout: {
-      background: { color: 'transparent' },
-      textColor: '#8b9cb3',
+  layout: {
+    background: { color: 'transparent' },
+    textColor: '#8b9cb3',
+  },
+  grid: {
+    vertLines: { color: '#1a2332' },
+    horzLines: { color: '#1a2332' },
+  },
+  crosshair: {
+    mode: LightweightCharts.CrosshairMode.Normal,
+    vertLine: { color: '#22d3ee', width: 1, style: LightweightCharts.LineStyle.Dashed },
+    horzLine: { color: '#22d3ee', width: 1, style: LightweightCharts.LineStyle.Dashed },
+  },
+  rightPriceScale: {
+    borderColor: '#1e2833',
+  },
+  timeScale: {
+    borderColor: '#1e2833',
+    timeVisible: false,
+    secondsVisible: false,
+    tickMarkFormatter: (time) => {
+      if (typeof time === 'number') {
+        return Math.round(time).toLocaleString();
+      }
+      return '';
     },
-    grid: {
-      vertLines: { color: '#1a2332' },
-      horzLines: { color: '#1a2332' },
+  },
+  localization: {
+    timeFormatter: (time) => {
+      if (typeof time === 'number') {
+        return Math.round(time).toLocaleString();
+      }
+      return '';
     },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color: '#22d3ee', width: 1, style: LightweightCharts.LineStyle.Dashed },
-      horzLine: { color: '#22d3ee', width: 1, style: LightweightCharts.LineStyle.Dashed },
-    },
-    rightPriceScale: {
-      borderColor: '#1e2833',
-    },
-    timeScale: {
-      borderColor: '#1e2833',
-      timeVisible: false,
-      secondsVisible: false,
-    },
-  };
+  },
+};
 
   mainChart = LightweightCharts.createChart(mainContainer, {
     ...commonOptions,
