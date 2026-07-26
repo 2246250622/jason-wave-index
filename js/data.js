@@ -19,21 +19,55 @@ async function fetchCurrentHeight() {
  * 從 Binance 取得 BTCUSDT 日線資料
  * @param {number} limit 最多取多少根（最大 1000）
  */
-async function fetchBinanceDaily(limit = 1000) {
+/**
+ * 從 Binance 取得更長的 BTCUSDT 日線
+ * 透過多次請求往前抓
+ */
+async function fetchBinanceDaily(totalLimit = 3000) {
   try {
-    const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=${limit}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Binance fetch failed');
-    const raw = await res.json();
+    let allData = [];
+    let endTime = Date.now(); // 從現在往前抓
+    const batchSize = 1000;
 
-    return raw.map(k => ({
-      time: Math.floor(k[0] / 1000),
-      open: parseFloat(k[1]),
-      high: parseFloat(k[2]),
-      low: parseFloat(k[3]),
-      close: parseFloat(k[4]),
-      value: parseFloat(k[4])
-    }));
+    while (allData.length < totalLimit) {
+      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=${batchSize}&endTime=${endTime}`;
+      const res = await fetch(url);
+      if (!res.ok) break;
+
+      const raw = await res.json();
+      if (!raw.length) break;
+
+      const batch = raw.map(k => ({
+        time: Math.floor(k[0] / 1000),
+        open: parseFloat(k[1]),
+        high: parseFloat(k[2]),
+        low: parseFloat(k[3]),
+        close: parseFloat(k[4]),
+        value: parseFloat(k[4])
+      }));
+
+      allData = batch.concat(allData); // 往前的資料接在前面
+      endTime = raw[0][0] - 1; // 下一輪的結束時間設為這批最早的前一毫秒
+
+      // 避免請求太快
+      await new Promise(r => setTimeout(r, 200));
+
+      if (raw.length < batchSize) break; // 已經抓到底了
+    }
+
+    // 去重並排序
+    const unique = [];
+    const seen = new Set();
+    for (const d of allData) {
+      if (!seen.has(d.time)) {
+        seen.add(d.time);
+        unique.push(d);
+      }
+    }
+    unique.sort((a, b) => a.time - b.time);
+
+    console.log('總共取得日線數量:', unique.length);
+    return unique;
   } catch (err) {
     console.error('取得 Binance 資料失敗:', err);
     return [];

@@ -144,36 +144,43 @@ function getHalvingHeights(minHeight, maxHeight) {
  * 畫減半垂直線（主圖 + 副圖都畫）
  */
 function drawHalvingLines(minHeight, maxHeight) {
-  // 先清除舊的
-  halvingLines.forEach(line => {
-    try {
-      mainChart.removeSeries(line.main);
-      jwiChart.removeSeries(line.jwi);
-    } catch (e) {}
-  });
-  halvingLines = [];
+  // 清除舊的
+  if (window.halvingLines) {
+    window.halvingLines.forEach(line => {
+      try {
+        mainChart.removeSeries(line.main);
+        jwiChart.removeSeries(line.jwi);
+      } catch (e) {}
+    });
+  }
+  window.halvingLines = [];
 
-  const heights = getHalvingHeights(minHeight, maxHeight);
+  const heights = [];
+  let h = Math.ceil(minHeight / 210000) * 210000;
+  while (h <= maxHeight) {
+    heights.push(h);
+    h += 210000;
+  }
 
-  heights.forEach(h => {
-    // 主圖減半線
+  heights.forEach(height => {
+    // 主圖
     const mainLine = mainChart.addLineSeries({
-      color: 'rgba(34, 211, 238, 0.35)',
+      color: 'rgba(34, 211, 238, 0.25)',
       lineWidth: 1,
       lineStyle: LightweightCharts.LineStyle.Dashed,
       lastValueVisible: false,
       priceLineVisible: false,
       crosshairMarkerVisible: false,
     });
-    // 用兩點畫垂直線
+    // 只畫一個點 + 用 price line 的方式較不穩定，改用很短的垂直感
     mainLine.setData([
-      { time: h, value: 0 },
-      { time: h, value: 1000000 }  // 足夠高的值
+      { time: height, value: 1 },
+      { time: height, value: 1000000 }
     ]);
 
-    // 副圖減半線
+    // 副圖
     const jwiLine = jwiChart.addLineSeries({
-      color: 'rgba(34, 211, 238, 0.35)',
+      color: 'rgba(34, 211, 238, 0.3)',
       lineWidth: 1,
       lineStyle: LightweightCharts.LineStyle.Dashed,
       lastValueVisible: false,
@@ -181,11 +188,11 @@ function drawHalvingLines(minHeight, maxHeight) {
       crosshairMarkerVisible: false,
     });
     jwiLine.setData([
-      { time: h, value: 0 },
-      { time: h, value: 1 }
+      { time: height, value: 0 },
+      { time: height, value: 1 }
     ]);
 
-    halvingLines.push({ main: mainLine, jwi: jwiLine, height: h });
+    window.halvingLines.push({ main: mainLine, jwi: jwiLine });
   });
 }
 
