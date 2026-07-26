@@ -152,7 +152,7 @@ function getHalvingHeights(minHeight, maxHeight) {
  * 畫減半垂直線（主圖 + 副圖都畫）
  */
 function drawHalvingLines(minHeight, maxHeight) {
-  // 清除舊的
+  // 清除舊的線
   if (window.halvingLines) {
     window.halvingLines.forEach(line => {
       try {
@@ -170,8 +170,8 @@ function drawHalvingLines(minHeight, maxHeight) {
     h += 210000;
   }
 
+  // 畫垂直線
   heights.forEach(height => {
-    // 主圖
     const mainLine = mainChart.addLineSeries({
       color: 'rgba(34, 211, 238, 0.25)',
       lineWidth: 1,
@@ -180,13 +180,11 @@ function drawHalvingLines(minHeight, maxHeight) {
       priceLineVisible: false,
       crosshairMarkerVisible: false,
     });
-    // 只畫一個點 + 用 price line 的方式較不穩定，改用很短的垂直感
     mainLine.setData([
       { time: height, value: 1 },
       { time: height, value: 1000000 }
     ]);
 
-    // 副圖
     const jwiLine = jwiChart.addLineSeries({
       color: 'rgba(34, 211, 238, 0.3)',
       lineWidth: 1,
@@ -201,29 +199,30 @@ function drawHalvingLines(minHeight, maxHeight) {
     ]);
 
     window.halvingLines.push({ main: mainLine, jwi: jwiLine });
-
-    // ===== 產生減半文字標籤 =====
-const labelsContainer = document.getElementById('halving-labels');
-if (labelsContainer) {
-  labelsContainer.innerHTML = ''; // 清空舊的
-
-  // 等圖表渲染完再計算位置
-  setTimeout(() => {
-    heights.forEach((height, index) => {
-      // 計算這個高度在圖表上的 x 像素位置
-      const x = mainChart.timeScale().timeToCoordinate(height);
-      if (x === null) return;
-
-      const label = document.createElement('div');
-      label.className = 'halving-label';
-      label.textContent = `Halving #${index + 1}`;
-      label.style.left = x + 'px';
-
-      labelsContainer.appendChild(label);
-    });
-  }, 50);
-}
   });
+
+  // ===== 產生文字標籤（只做一次） =====
+  const labelsContainer = document.getElementById('halving-labels');
+  if (labelsContainer) {
+    labelsContainer.innerHTML = '';
+
+    setTimeout(() => {
+      heights.forEach((height, index) => {
+        const x = mainChart.timeScale().timeToCoordinate(height);
+        if (x === null) return;
+
+        const label = document.createElement('div');
+        label.className = 'halving-label';
+        label.textContent = `Halving #${index + 1}`;
+        label.dataset.height = height;          // 關鍵！
+        label.style.left = x + 'px';
+        labelsContainer.appendChild(label);
+      });
+
+      // 產生完後立即更新一次位置
+      updateHalvingLabelsPosition();
+    }, 80);
+  }
 }
 
 /**
