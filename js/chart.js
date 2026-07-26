@@ -37,17 +37,15 @@ function initCharts() {
   rightPriceScale: {
     borderColor: '#1e2833',
   },
-  timeScale: {
-    borderColor: '#1e2833',
-    timeVisible: false,
-    secondsVisible: false,
-    tickMarkFormatter: (time) => {
-      if (typeof time === 'number') {
-        return Math.round(time).toLocaleString();
-      }
-      return '';
-    },
+timeScale: {
+  borderColor: '#1e2833',
+  timeVisible: false,
+  secondsVisible: false,
+  tickMarkFormatter: (time) => {
+    if (typeof time !== 'number') return '';
+    return Math.round(time).toLocaleString();
   },
+},
   localization: {
     timeFormatter: (time) => {
       if (typeof time === 'number') {
