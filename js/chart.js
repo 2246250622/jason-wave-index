@@ -14,7 +14,7 @@ let bullBearSeries = null;
 function initCharts() {
   const mainContainer = document.getElementById('main-chart');
   const jwiContainer = document.getElementById('jwi-chart');
-
+  
   if (!mainContainer || !jwiContainer) {
     console.error('找不到圖表容器');
     return;
@@ -77,6 +77,11 @@ function initCharts() {
   jwiChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (range) mainChart.timeScale().setVisibleLogicalRange(range);
   });
+
+  mainChart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+  // 重新觸發一次減半線繪製（會順便更新標籤位置）
+  // 這裡先簡單處理，之後可再優化
+});
 
   window.addEventListener('resize', () => {
     if (mainChart) {
@@ -193,6 +198,28 @@ function drawHalvingLines(minHeight, maxHeight) {
     ]);
 
     window.halvingLines.push({ main: mainLine, jwi: jwiLine });
+
+    // ===== 產生減半文字標籤 =====
+const labelsContainer = document.getElementById('halving-labels');
+if (labelsContainer) {
+  labelsContainer.innerHTML = ''; // 清空舊的
+
+  // 等圖表渲染完再計算位置
+  setTimeout(() => {
+    heights.forEach((height, index) => {
+      // 計算這個高度在圖表上的 x 像素位置
+      const x = mainChart.timeScale().timeToCoordinate(height);
+      if (x === null) return;
+
+      const label = document.createElement('div');
+      label.className = 'halving-label';
+      label.textContent = `Halving #${index + 1}`;
+      label.style.left = x + 'px';
+
+      labelsContainer.appendChild(label);
+    });
+  }, 50);
+}
   });
 }
 
