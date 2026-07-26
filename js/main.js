@@ -41,11 +41,11 @@ const state = {
   theme: localStorage.getItem('jwi-theme') || 'dark',
   lang: localStorage.getItem('jwi-lang') || 'zh',
   scale: 'log',
-  bucket: 'D',
+  style: 'wave',     // 預設用波浪著色
+  bucket: 'D',       // 預設用日線
   currentHeight: 0,
   currentPrice: 0,
-  priceData: [],
-  style: 'line',
+  priceData: []
 };
 
 function $(sel) { return document.querySelector(sel); }

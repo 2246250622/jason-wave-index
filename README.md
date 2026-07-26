@@ -4,7 +4,7 @@
 
 概念參考 [Wolfy Wave Index](https://github.com/wolfyxbt/wolfy-wave-index)，UI 與程式碼皆重新實作。
 
-**線上預覽：**（部署後填入你的網址）
+**線上預覽：** [https://2246250622.github.io/jason-wave-index/](https://2246250622.github.io/jason-wave-index/)
 
 ## 什麼是 Jason Wave Index？
 

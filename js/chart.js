@@ -86,6 +86,10 @@ mainChart.timeScale().subscribeVisibleLogicalRangeChange(() => {
   updateHalvingLabelsPosition();
 });
 
+mainChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+  updateHalvingLabelsPosition();
+});
+
   window.addEventListener('resize', () => {
     if (mainChart) {
       mainChart.applyOptions({
@@ -451,7 +455,7 @@ if (segmentPoints.length >= 2) {
 
   // ===== 未來推演 =====
   const lastHeight = priceData[priceData.length - 1].time;
-  const futureData = generateFutureJWI(lastHeight);
+  const futureData = generateFutureJWI(lastHeight, 80000, 400);  // 縮短未來推演
 
   futureSeries = jwiChart.addLineSeries({
     color: 'rgba(34, 211, 238, 0.4)',

@@ -45,16 +45,33 @@
 
 .color-scale {
   position: absolute;
-  right: 70px;          /* 再往左移，避開價格刻度 */
-  top: 80px;
-  height: 45%;          /* 只佔主圖高度 */
-  width: 14px;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  z-index: 5;
+  gap: 8px;
+  z-index: 10;
   pointer-events: none;
+  background: rgba(11, 15, 20, 0.75);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.color-scale .scale-bar {
+  width: 110px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #3b82f6, #22d3ee, #a3e635, #facc15, #f87171);
+}
+
+.color-scale .scale-label {
+  font-size: 0.7rem;
+  color: #8b9cb3;
+  margin: 0;
+}
+
 
 .halving-labels {
   position: absolute;
@@ -272,34 +289,8 @@ body {
   font-weight: 600;
 }
 
-.color-scale.horizontal {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 6;
-  pointer-events: none;
-  background: rgba(11, 15, 20, 0.7);
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
 
-.color-scale.horizontal .scale-bar {
-  width: 120px;
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(to right, #3b82f6, #22d3ee, #a3e635, #facc15, #f87171);
-}
 
-.color-scale.horizontal .scale-label {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin: 0;
-}
 
 
 
