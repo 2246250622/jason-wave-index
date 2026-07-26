@@ -533,7 +533,7 @@ function updateHalvingLabelsPosition() {
 
   const labels = labelsContainer.querySelectorAll('.halving-label');
   labels.forEach(label => {
-    const const height = Number(label.dataset.height);
+    const height = Number(label.dataset.height);
     if (!height) return;
 
     const x = mainChart.timeScale().timeToCoordinate(height);
