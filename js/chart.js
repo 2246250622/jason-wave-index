@@ -41,10 +41,15 @@ timeScale: {
   borderColor: '#1e2833',
   timeVisible: false,
   secondsVisible: false,
-  tickMarkFormatter: (time) => {
-    if (typeof time !== 'number') return '';
-    return Math.round(time).toLocaleString();
-  },
+tickMarkFormatter: (time) => {
+  if (typeof time !== 'number') return '';
+
+  const d = estimateDateFromHeight(time);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+
+  return `${year}/${month}`;
+},
 },
   localization: {
     timeFormatter: (time) => {
@@ -545,4 +550,42 @@ function updateHalvingLabelsPosition() {
       label.style.left = x + 'px';
     }
   });
+}
+
+
+
+// 減半錨點（高度 → 時間戳）
+const HALVING_ANCHORS = [
+  { height: 210000,  date: new Date('2012-11-28').getTime() },
+  { height: 420000,  date: new Date('2016-07-09').getTime() },
+  { height: 630000,  date: new Date('2020-05-11').getTime() },
+  { height: 840000,  date: new Date('2024-04-20').getTime() },
+  { height: 959700,  date: new Date('2026-07-26').getTime() }, // 目前大約
+];
+
+/**
+ * 根據區塊高度估算日期
+ */
+function estimateDateFromHeight(height) {
+  // 找到左右兩個錨點做線性插值
+  let left = HALVING_ANCHORS[0];
+  let right = HALVING_ANCHORS[HALVING_ANCHORS.length - 1];
+
+  for (let i = 0; i < HALVING_ANCHORS.length - 1; i++) {
+    if (height >= HALVING_ANCHORS[i].height && height <= HALVING_ANCHORS[i + 1].height) {
+      left = HALVING_ANCHORS[i];
+      right = HALVING_ANCHORS[i + 1];
+      break;
+    }
+  }
+
+  // 超出範圍就用最靠近的
+  if (height < HALVING_ANCHORS[0].height) {
+    left = HALVING_ANCHORS[0];
+    right = HALVING_ANCHORS[1];
+  }
+
+  const ratio = (height - left.height) / (right.height - left.height);
+  const estimated = left.date + ratio * (right.date - left.date);
+  return new Date(estimated);
 }
