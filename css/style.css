@@ -45,10 +45,10 @@
 
 .color-scale {
   position: absolute;
-  right: 12px;
-  top: 60px;
-  bottom: 40%;
-  width: 18px;
+  right: 8px;
+  top: 72%;          /* 從副圖開始 */
+  bottom: 40px;
+  width: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,16 +78,16 @@
 
 .scale-bar {
   flex: 1;
-  width: 10px;
-  border-radius: 6px;
+  width: 8px;
+  border-radius: 4px;
   background: linear-gradient(to top, #3b82f6, #22d3ee, #a3e635, #facc15, #f87171);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .scale-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
-  margin: 4px 0;
+  margin: 3px 0;
 }
 .spinner {
   width: 36px;

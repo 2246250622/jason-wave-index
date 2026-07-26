@@ -64,6 +64,8 @@ function initCharts() {
     height: Math.max(mainContainer.clientHeight, 400),
   });
 
+  
+
   jwiChart = LightweightCharts.createChart(jwiContainer, {
     ...commonOptions,
     width: jwiContainer.clientWidth,
@@ -78,9 +80,10 @@ function initCharts() {
     if (range) mainChart.timeScale().setVisibleLogicalRange(range);
   });
 
-  mainChart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-  // 重新觸發一次減半線繪製（會順便更新標籤位置）
-  // 這裡先簡單處理，之後可再優化
+
+// 讓 Halving 標籤跟著時間軸移動
+mainChart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+  updateHalvingLabelsPosition();
 });
 
   window.addEventListener('resize', () => {
@@ -522,4 +525,23 @@ function generateMockData(startHeight = 300000, endHeight = 960000, step = 144) 
     });
   }
   return data;
+}
+
+function updateHalvingLabelsPosition() {
+  const labelsContainer = document.getElementById('halving-labels');
+  if (!labelsContainer || !mainChart) return;
+
+  const labels = labelsContainer.querySelectorAll('.halving-label');
+  labels.forEach(label => {
+    const const height = Number(label.dataset.height);
+    if (!height) return;
+
+    const x = mainChart.timeScale().timeToCoordinate(height);
+    if (x === null) {
+      label.style.display = 'none';
+    } else {
+      label.style.display = 'block';
+      label.style.left = x + 'px';
+    }
+  });
 }
