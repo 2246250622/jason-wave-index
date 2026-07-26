@@ -246,6 +246,66 @@ function updateCharts(priceData, scale = 'log', style = 'line') {
     });
     window.waveSegments = [];
   }
+  // 在清除舊 series 的區塊加上
+if (window.bgSeries) {
+  window.bgSeries.forEach(s => {
+    try { mainChart.removeSeries(s); } catch(e) {}
+  });
+  window.bgSeries = [];
+}
+// ===== 牛熊背景著色 =====
+window.bgSeries = [];
+let currentPhase = null;
+let segmentStart = null;
+let segmentPoints = [];
+
+const pushBackground = (phase, points) => {
+  if (points.length < 2) return;
+
+  const color = phase === 'bull' 
+    ? 'rgba(34, 211, 238, 0.08)' 
+    : 'rgba(248, 113, 113, 0.08)';
+
+  const series = mainChart.addAreaSeries({
+    topColor: color,
+    bottomColor: color,
+    lineColor: 'transparent',
+    lineWidth: 0,
+    lastValueVisible: false,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+
+  // 用很高的值讓它填滿整個可見區域
+  series.setData(points.map(p => ({
+    time: p.time,
+    value: 10000000   // 足夠高，在對數座標下也能蓋住
+  })));
+
+  window.bgSeries.push(series);
+};
+
+priceData.forEach((d, i) => {
+  const phase = getPhase(d.time);
+
+  if (currentPhase === null) {
+    currentPhase = phase;
+    segmentStart = d;
+    segmentPoints = [d];
+  } else if (phase !== currentPhase) {
+    // 階段轉換，結束上一段
+    pushBackground(currentPhase, segmentPoints);
+    currentPhase = phase;
+    segmentPoints = [priceData[i-1], d]; // 接上一個點讓它連續
+  } else {
+    segmentPoints.push(d);
+  }
+});
+
+// 最後一段
+if (segmentPoints.length >= 2) {
+  pushBackground(currentPhase, segmentPoints);
+}
 
   // ===== 主圖 =====
   if (style === 'candle') {
