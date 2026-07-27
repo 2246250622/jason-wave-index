@@ -337,28 +337,44 @@ body {
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 8px;
     padding: 10px 12px;
   }
 
   .header-center {
     width: 100%;
+    display: flex;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
+  }
+
+  .stat {
+    flex: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
   }
 
   .stat-value {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .controls {
-    gap: 10px;
-    padding: 8px 12px;
+    padding: 8px 10px;
+    gap: 8px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .control-group {
     flex-shrink: 0;
+  }
+
+  .ctrl-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
   }
 
   .color-scale {
@@ -368,10 +384,6 @@ body {
 
   .color-scale .scale-bar {
     width: 70px;
-  }
-
-  .halving-label {
-    font-size: 0.65rem;
-    padding: 1px 5px;
+    height: 6px;
   }
 }
