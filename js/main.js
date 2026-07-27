@@ -200,7 +200,7 @@ async function loadRealData() {
   try {
     const [height, dailyData, livePrice] = await Promise.all([
       fetchCurrentHeight(),
-      fetchBinanceDaily(1000),
+      fetchBinanceDaily(3200),
       fetchCurrentPrice()
     ]);
 
@@ -333,17 +333,34 @@ async function init() {
 
   await loadRealData();
 
-  // 每 60 秒更新高度與價格
-  setInterval(async () => {
+// 每 2 秒更新即時價格與區塊高度
+setInterval(async () => {
+  try {
     const [height, price] = await Promise.all([
       fetchCurrentHeight(),
       fetchCurrentPrice()
     ]);
-    if (height && price) {
-      updateHeader(height, price);
-    }
-  }, 60000);
 
+    if (height && price) {
+      const oldPrice = state.currentPrice;
+      updateHeader(height, price);
+
+      // 價格變化時閃爍
+      if (oldPrice && Math.abs(price - oldPrice) > 0.5) {
+        const priceEl = document.getElementById('price-value');
+        if (priceEl) {
+          priceEl.style.transition = 'color 0.15s';
+          priceEl.style.color = price > oldPrice ? '#4ade80' : '#f87171';
+          setTimeout(() => {
+            priceEl.style.color = '';
+          }, 500);
+        }
+      }
+    }
+  } catch (err) {
+    // 安靜失敗，避免一直噴錯
+  }
+}, 2000);
   console.log('Jason Wave Index 初始化完成');
 }
 

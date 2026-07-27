@@ -23,19 +23,21 @@ async function fetchCurrentHeight() {
  * 從 Binance 取得更長的 BTCUSDT 日線
  * 透過多次請求往前抓
  */
-async function fetchBinanceDaily(totalLimit = 3000) {
+async function fetchBinanceDaily(targetCount = 3200) {
   try {
     let allData = [];
-    let endTime = Date.now(); // 從現在往前抓
+    let endTime = Date.now();
     const batchSize = 1000;
+    let safety = 0;
 
-    while (allData.length < totalLimit) {
+    while (allData.length < targetCount && safety < 6) {
+      safety++;
       const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=${batchSize}&endTime=${endTime}`;
       const res = await fetch(url);
       if (!res.ok) break;
 
       const raw = await res.json();
-      if (!raw.length) break;
+      if (!raw || raw.length === 0) break;
 
       const batch = raw.map(k => ({
         time: Math.floor(k[0] / 1000),
@@ -46,34 +48,44 @@ async function fetchBinanceDaily(totalLimit = 3000) {
         value: parseFloat(k[4])
       }));
 
-      allData = batch.concat(allData); // 往前的資料接在前面
-      endTime = raw[0][0] - 1; // 下一輪的結束時間設為這批最早的前一毫秒
+      // 接在前面
+      allData = batch.concat(allData);
+      endTime = raw[0][0] - 1;
 
-      // 避免請求太快
-      await new Promise(r => setTimeout(r, 200));
+      // 避免打太快
+      await new Promise(r => setTimeout(r, 300));
 
-      if (raw.length < batchSize) break; // 已經抓到底了
+      if (raw.length < batchSize) break;
     }
 
-    // 去重並排序
-    const unique = [];
-    const seen = new Set();
-    for (const d of allData) {
-      if (!seen.has(d.time)) {
-        seen.add(d.time);
-        unique.push(d);
-      }
-    }
-    unique.sort((a, b) => a.time - b.time);
+    // 去重 + 排序
+    const map = new Map();
+    allData.forEach(d => map.set(d.time, d));
+    const unique = Array.from(map.values()).sort((a, b) => a.time - b.time);
 
-    console.log('總共取得日線數量:', unique.length);
+    console.log('最終取得日線數量:', unique.length);
     return unique;
   } catch (err) {
-    console.error('取得 Binance 資料失敗:', err);
-    return [];
+    console.error('取得較長歷史失敗:', err);
+    // 失敗就退回只抓 1000 根
+    return fetchBinanceDailySimple(1000);
   }
 }
 
+// 備用的簡單版本
+async function fetchBinanceDailySimple(limit = 1000) {
+  const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=${limit}`;
+  const res = await fetch(url);
+  const raw = await res.json();
+  return raw.map(k => ({
+    time: Math.floor(k[0] / 1000),
+    open: parseFloat(k[1]),
+    high: parseFloat(k[2]),
+    low: parseFloat(k[3]),
+    close: parseFloat(k[4]),
+    value: parseFloat(k[4])
+  }));
+}
 /**
  * 取得即時價格（簡單輪詢）
  */
