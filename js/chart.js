@@ -409,52 +409,58 @@ if (segmentPoints.length >= 2) {
       : LightweightCharts.PriceScaleMode.Normal,
   });
 
-  // ===== 副圖 JWI 牛熊分色 =====
-  const bullData = [];
-  const bearData = [];
 
-  priceData.forEach((d, i) => {
-    const jwi = +calcJWI(d.time).toFixed(4);
-    const phase = getPhase(d.time);
-    const point = { time: d.time, value: jwi };
-
-    if (phase === 'bull') {
-      bullData.push(point);
-      if (i > 0 && getPhase(priceData[i - 1].time) === 'bear') {
-        bearData.push(point);
-      }
-    } else {
-      bearData.push(point);
-      if (i > 0 && getPhase(priceData[i - 1].time) === 'bull') {
-        bullData.push(point);
-      }
-    }
+// ===== 副圖 JWI（分段牛熊著色） =====
+if (window.jwiSegments) {
+  window.jwiSegments.forEach(s => {
+    try { jwiChart.removeSeries(s); } catch(e) {}
   });
+}
+window.jwiSegments = [];
 
-  window.bullSeries = jwiChart.addLineSeries({
-    color: '#22d3ee',
+if (jwiSeries) {
+  try { jwiChart.removeSeries(jwiSeries); } catch(e) {}
+  jwiSeries = null;
+}
+
+const maxSeg = 60;
+const segSize = Math.max(1, Math.floor(priceData.length / maxSeg));
+
+for (let i = 0; i < priceData.length - 1; i += segSize) {
+  const end = Math.min(i + segSize, priceData.length - 1);
+  const slice = priceData.slice(i, end + 1);
+  const mid = slice[Math.floor(slice.length / 2)];
+  const phase = getPhase(mid.time);
+  const color = phase === 'bull' ? '#22d3ee' : '#f87171';
+
+  const seg = jwiChart.addLineSeries({
+    color: color,
     lineWidth: 2.5,
     lastValueVisible: false,
     priceLineVisible: false,
+    crosshairMarkerVisible: false,
   });
-  window.bullSeries.setData(bullData);
 
-  window.bearSeries = jwiChart.addLineSeries({
-    color: '#f87171',
-    lineWidth: 2.5,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  window.bearSeries.setData(bearData);
-
-  jwiSeries = jwiChart.addLineSeries({
-    color: 'transparent',
-    lineWidth: 0,
-  });
-  jwiSeries.setData(priceData.map(d => ({
+  seg.setData(slice.map(d => ({
     time: d.time,
     value: +calcJWI(d.time).toFixed(4)
   })));
+
+  window.jwiSegments.push(seg);
+}
+
+// 透明線負責顯示最後數值
+jwiSeries = jwiChart.addLineSeries({
+  color: 'transparent',
+  lineWidth: 0,
+  lastValueVisible: true,
+  priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+});
+jwiSeries.setData(priceData.map(d => ({
+  time: d.time,
+  value: +calcJWI(d.time).toFixed(4)
+})));
+
 
   // ===== 未來推演 =====
   const lastHeight = priceData[priceData.length - 1].time;
