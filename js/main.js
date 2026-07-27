@@ -321,6 +321,11 @@ function bindEvents() {
       refreshChart();
     });
   });
+  $('#btn-reset')?.addEventListener('click', () => {
+  if (mainChart) {
+    mainChart.timeScale().fitContent();
+  }
+});
 }
 
 async function init() {
