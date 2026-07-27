@@ -112,23 +112,34 @@ mainChart.timeScale().subscribeVisibleTimeRangeChange(() => {
 const tooltip = document.getElementById('tooltip');
 
 mainChart.subscribeCrosshairMove(param => {
-  if (!param || !param.time || !param.seriesData) {
+  if (!param || !param.time || !window.fullPriceData) {
     tooltip.style.display = 'none';
     return;
   }
 
-  const priceDataPoint = param.seriesData.get(priceSeries);
-  if (!priceDataPoint) {
-    tooltip.style.display = 'none';
-    return;
-  }
-
+  // 從完整資料找最接近的點
   const height = param.time;
-  const price = priceDataPoint.close || priceDataPoint.value;
-  const jwi = calcJWI(height);
-  const phase = getPhase(height);
+  let closest = null;
+  let minDiff = Infinity;
 
-  document.getElementById('tip-height').textContent = height.toLocaleString();
+  for (const d of window.fullPriceData) {
+    const diff = Math.abs(d.time - height);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = d;
+    }
+  }
+
+  if (!closest || minDiff > 2000) { // 差距太大就不顯示
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const price = closest.close || closest.value;
+  const jwi = calcJWI(closest.time);
+  const phase = getPhase(closest.time);
+
+  document.getElementById('tip-height').textContent = closest.time.toLocaleString();
   document.getElementById('tip-price').textContent = Number(price).toLocaleString('en-US', {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0
   });
@@ -480,6 +491,9 @@ jwiSeries.setData(priceData.map(d => ({
 
   mainChart.timeScale().fitContent();
   console.log('Charts updated – style:', style);
+
+  // 存一份完整資料給 tooltip 使用
+  window.fullPriceData = priceData;
 }
 
 /**
@@ -543,18 +557,20 @@ function updateHalvingLabelsPosition() {
   const labelsContainer = document.getElementById('halving-labels');
   if (!labelsContainer || !mainChart) return;
 
-  const labels = labelsContainer.querySelectorAll('.halving-label');
-  labels.forEach(label => {
-    const height = Number(label.dataset.height);
-    if (!height) return;
+  requestAnimationFrame(() => {
+    const labels = labelsContainer.querySelectorAll('.halving-label');
+    labels.forEach(label => {
+      const height = Number(label.dataset.height);
+      if (!height) return;
 
-    const x = mainChart.timeScale().timeToCoordinate(height);
-    if (x === null) {
-      label.style.display = 'none';
-    } else {
-      label.style.display = 'block';
-      label.style.left = x + 'px';
-    }
+      const x = mainChart.timeScale().timeToCoordinate(height);
+      if (x === null || x < -50 || x > mainChart.timeScale().width() + 50) {
+        label.style.display = 'none';
+      } else {
+        label.style.display = 'block';
+        label.style.left = x + 'px';
+      }
+    });
   });
 }
 
