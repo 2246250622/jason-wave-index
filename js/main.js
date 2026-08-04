@@ -17,6 +17,7 @@ const I18N = {
     line: '折線',
     candle: 'K線',
     wave: '波浪著色',
+    reduceHalf: '距離減半',
   },
   en: {
     price: 'BTC Price',
@@ -34,6 +35,7 @@ const I18N = {
     line: 'Line',
     candle: 'Candles',
     wave: 'Wave Color',
+    reduceHalf: 'Next Halving',
   }
 };
 
@@ -108,6 +110,18 @@ function updatePhaseText() {
 }
 
 function updateHeader(height, price) {
+
+  // 計算距離下一次減半
+const nextHalvingHeight = Math.ceil(height / 210000) * 210000;
+const blocksLeft = nextHalvingHeight - height;
+const daysLeft = Math.round(blocksLeft / 144);
+
+const countdownEl = document.getElementById('halving-countdown');
+if (countdownEl) {
+  countdownEl.textContent = `${blocksLeft.toLocaleString()} 塊 (≈${daysLeft}天)`;
+}
+
+
   if (!height || !price) return;
 
   state.currentHeight = height;
@@ -124,6 +138,8 @@ function updateHeader(height, price) {
   $('#height-value').textContent = height.toLocaleString();
 
   updatePhaseText();
+  // 更新網頁標題
+document.title = `$${Math.round(price).toLocaleString()} | Jason Wave Index`;
 }
 
 

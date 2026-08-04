@@ -330,7 +330,12 @@ const pushBackground = (phase, points) => {
   })));
 
   window.bgSeries.push(series);
+
+
+  
 };
+
+
 
 priceData.forEach((d, i) => {
   const phase = getPhase(d.time);
@@ -352,6 +357,26 @@ priceData.forEach((d, i) => {
 // 最後一段
 if (segmentPoints.length >= 2) {
   pushBackground(currentPhase, segmentPoints);
+}
+
+// ===== 延伸未來區域的牛熊背景 =====
+const lastH = priceData[priceData.length - 1].time;
+const futureEnd = lastH + 420000; // 跟未來推演一樣長
+let fPhase = getPhase(lastH);
+let fPoints = [];
+
+for (let h = lastH; h <= futureEnd; h += 2000) {
+  const phase = getPhase(h);
+  if (phase !== fPhase && fPoints.length > 1) {
+    pushBackground(fPhase, fPoints);
+    fPoints = [{ time: h - 2000 }, { time: h }];
+    fPhase = phase;
+  } else {
+    fPoints.push({ time: h });
+  }
+}
+if (fPoints.length > 1) {
+  pushBackground(fPhase, fPoints);
 }
 
   // ===== 主圖 =====
@@ -474,17 +499,17 @@ jwiSeries.setData(priceData.map(d => ({
 
 
   // ===== 未來推演 =====
-  const lastHeight = priceData[priceData.length - 1].time;
-  const futureData = generateFutureJWI(lastHeight, 80000, 400);  // 縮短未來推演
-
-  futureSeries = jwiChart.addLineSeries({
-    color: 'rgba(34, 211, 238, 0.4)',
-    lineWidth: 1,
-    lineStyle: LightweightCharts.LineStyle.Dashed,
-    lastValueVisible: false,
-    priceLineVisible: false,
-  });
-  futureSeries.setData(futureData);
+const lastHeight = priceData[priceData.length - 1].time;
+const futureData = generateFutureJWI(lastHeight, 180000, 800);
+futureSeries = jwiChart.addLineSeries({
+  color: 'rgba(34, 211, 238, 0.45)',
+  lineWidth: 1.5,
+  lineStyle: LightweightCharts.LineStyle.Dashed,
+  lastValueVisible: false,
+  priceLineVisible: false,
+  crosshairMarkerVisible: false,
+});
+futureSeries.setData(futureData);
 
   // ===== 減半線 =====
   drawHalvingLines(priceData[0].time, lastHeight + 150000);

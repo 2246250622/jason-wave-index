@@ -75,7 +75,8 @@ export const I18N = {
     theme: '主題',
     language: '語言',
     about: '關於指標',
-    live: '即時'
+    live: '即時',
+    reduceHalf: '距離減半'
   },
   en: {
     title: 'Jason Wave Index',
@@ -98,6 +99,7 @@ export const I18N = {
     theme: 'Theme',
     language: 'Language',
     about: 'About',
-    live: 'Live'
+    live: 'Live',
+    reduceHalf: 'Next Halving'
   }
 };

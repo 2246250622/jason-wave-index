@@ -23,6 +23,7 @@ async function fetchCurrentHeight() {
  * 從 Binance 取得更長的 BTCUSDT 日線
  * 透過多次請求往前抓
  */
+
 async function fetchBinanceDaily(targetCount = 3200) {
   try {
     let allData = [];
